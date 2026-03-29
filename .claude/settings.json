@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // .tool_response.filePath' | { read -r f; grep -nEH '(sk-[a-zA-Z0-9]{20,}|AKIA[0-9A-Z]{16}|password\\s*[:=]\\s*[\"'\\''][^\"'\\'']{4,}|api[_-]?key\\s*[:=]\\s*[\"'\\''][^\"'\\'']{4,}|secret\\s*[:=]\\s*[\"'\\''][^\"'\\'']{4,}|Bearer\\s+[a-zA-Z0-9._-]{20,}|ghp_[a-zA-Z0-9]{36}|gho_[a-zA-Z0-9]{36}|-----BEGIN\\s+(RSA\\s+)?PRIVATE\\s+KEY)' \"$f\" && echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"WARNING: 機密情報の可能性があるパターンがファイルに検出されました。該当箇所を確認し、環境変数や.envファイルへの移行を検討してください。\"}}'; } 2>/dev/null || true",
+            "timeout": 10,
+            "statusMessage": "セキュリティチェック中..."
+          }
+        ]
+      }
+    ]
+  }
+}
