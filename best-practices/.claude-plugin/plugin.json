@@ -1,0 +1,8 @@
+{
+  "name": "best-practices",
+  "description": "Claude Code ベストプラクティスの調査・監査・適用ワークフロー。Web検索で最新のベストプラクティスを調査し、現在の設定と比較して改善計画を作成、ステップバイステップで適用する。",
+  "version": "1.0.0",
+  "author": {
+    "name": "odaryo"
+  }
+}
