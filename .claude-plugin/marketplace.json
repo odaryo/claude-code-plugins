@@ -1,0 +1,21 @@
+{
+  "name": "claude-code-plugins",
+  "description": "Claude Code プラグインコレクション",
+  "owner": {
+    "name": "odaryo"
+  },
+  "plugins": [
+    {
+      "name": "consulting-codex",
+      "source": "./consulting-codex",
+      "description": "Codex CLIを使った設計レビュー・技術相談・セカンドオピニオン取得",
+      "version": "1.0.0"
+    },
+    {
+      "name": "best-practices",
+      "source": "./best-practices",
+      "description": "Claude Code ベストプラクティスの調査・監査・適用ワークフロー",
+      "version": "1.0.0"
+    }
+  ]
+}
