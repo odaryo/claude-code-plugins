@@ -16,7 +16,8 @@
 - `AGENTS.md`: Codex など、AGENTS.md を読むエージェントがこのリポジトリで作業するためのガイド。
 - `README.md`: 利用者向けの概要、インストール方法、プラグイン一覧。
 - `.claude/`: Claude Code 向けのローカル設定と補助スキル。補助スキルはここを正とする。
-- `.codex/`: Codex 向けのローカル補足。`.codex/skills` は `.claude/skills` へのシンボリックリンクにする。
+- `.agents/`: Codex が探索するリポジトリローカル配置。`.agents/skills` は `.claude/skills` へのシンボリックリンク、`.agents/plugins/marketplace.json` は Codex 用 marketplace 定義。
+- `.codex/`: Codex 向けのローカル補足ドキュメント。`.codex/skills` は旧構成互換のためのシンボリックリンク（正は `.agents/skills`）。
 - `.ai/`: 確定した仕様、設計、運用ルールを保存する場所。git 管理する。
 - `.ai_text/`: 検討メモ、作業計画、レビュー下書きなど一時的な文書を保存する場所。git 管理しない。
 
@@ -42,19 +43,17 @@ Claude Code 向けには以下を確認する。
 
 Codex 向けには以下を確認する。
 
-- プラグインごとに `.codex-plugin/plugin.json` が存在する。
-- Codex が読み込むスキル配置は `skills/<skill-name>/SKILL.md` を基本にする。
-- リポジトリローカルの補助スキルは `.codex/skills` へ重複配置せず、`.claude/skills` を参照する。
-- ルート直下に `SKILL.md` を置く特殊構成を使う場合は、Codex と Claude の双方で読めるか検証する。
-- Codex 用 marketplace を追加する場合は、Codex の plugin manifest 形式に合わせる。
+- プラグインごとに `.codex-plugin/plugin.json` が存在し、`.claude-plugin/plugin.json` と `name` / `version` / `description` が一致している。
+- Codex が読み込むスキル配置は `skills/<skill-name>/SKILL.md` を基本にする。ルート直下に `SKILL.md` を置く構成は Codex で検出されないため使わない。
+- リポジトリローカルの補助スキルは `.agents/skills`（`.claude/skills` への symlink）経由で参照する。重複配置しない。
+- Codex 用 marketplace は `.agents/plugins/marketplace.json` を正とし、`.claude-plugin/marketplace.json` とプラグイン一覧・source を同期する。
 - Codex 固有の作業ルールは `AGENTS.md` に追記し、Claude 側にも必要な内容は `CLAUDE.md` に同期する。
 
 ## 現在の構成上の注意
 
-- `consulting-codex/` と `best-practices/` は Claude Code 向けの `.claude-plugin/plugin.json` を持つ。
-- Codex 向けの `.codex-plugin/plugin.json` は未整備の場合があるため、両対応作業では最初に存在確認する。
-- `consulting-codex/` はルート直下の `SKILL.md` を参照する構成になっている。Codex 対応時は、必要に応じて `skills/consulting-codex/SKILL.md` 形式への移行または互換レイヤーを検討する。
-- `best-practices/` は `skills/<name>/SKILL.md` 形式で、Claude/Codex の双方に合わせやすい。
+- `consulting-codex/` と `best-practices/` は `.claude-plugin/plugin.json`（Claude Code 用）と `.codex-plugin/plugin.json`（Codex 用）の両方を持つ。
+- 両プラグインとも `skills/<name>/SKILL.md` 形式に統一している。新しいスキルもこの形式で追加する。
+- `.codex/skills` の symlink は旧構成互換のために残している。新しい参照は `.agents/skills` を使う。
 
 ## 作業手順
 
@@ -79,8 +78,8 @@ Codex 向けには以下を確認する。
 - JSON を変更した場合は `jq . <file>` で構文確認する。
 - Markdown frontmatter を変更した場合は、`name` と `description` の有無を確認する。
 - Claude plugin manifest を変更した場合は `.claude-plugin/plugin.json` と marketplace の整合性を確認する。
-- Codex plugin manifest を変更した場合は `.codex-plugin/plugin.json` の必須フィールドと関連ファイルの存在を確認する。
-- 上記の構造検証は `python3 scripts/validate_plugins.py` でまとめて実行できる（PyYAML が必要）。CI でも同じスクリプトが実行される。
+- Codex plugin manifest を変更した場合は `.codex-plugin/plugin.json` の必須フィールドと Claude manifest・`.agents/plugins/marketplace.json` との整合性を確認する。
+- 上記の構造検証（Claude / Codex 両方）は `python3 scripts/validate_plugins.py` でまとめて実行できる（PyYAML が必要）。CI でも同じスクリプトが実行される。
 
 ## PR とマージのフロー
 

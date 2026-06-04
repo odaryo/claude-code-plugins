@@ -1,0 +1,9 @@
+{
+  "name": "consulting-codex",
+  "version": "1.0.0",
+  "description": "Codex CLIを使った設計レビュー・技術相談・セカンドオピニオン取得",
+  "author": {
+    "name": "hitotocolabo"
+  },
+  "skills": "./skills/"
+}

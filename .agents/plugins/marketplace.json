@@ -1,0 +1,32 @@
+{
+  "name": "my-ai-plugins",
+  "interface": {
+    "displayName": "My AI Plugins"
+  },
+  "plugins": [
+    {
+      "name": "consulting-codex",
+      "source": {
+        "source": "local",
+        "path": "./consulting-codex"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "best-practices",
+      "source": {
+        "source": "local",
+        "path": "./best-practices"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
