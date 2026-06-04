@@ -6,6 +6,9 @@
 - 各プラグインの source ディレクトリと .claude-plugin/plugin.json の存在・必須フィールド
 - marketplace.json と plugin.json の name / version の一致
 - SKILL.md の YAML frontmatter（name / description 必須、disable-model-invocation は boolean）
+- 各プラグインの .codex-plugin/plugin.json の存在・必須フィールド・Claude manifest との一致
+- .agents/plugins/marketplace.json（Codex marketplace）と Claude marketplace の整合性
+- .agents/skills が .claude/skills を参照していること
 
 エラーは全件収集してから報告し、1件以上あれば exit 1。
 """
@@ -100,23 +103,103 @@ def check_plugin(entry: dict) -> None:
             f"'{entry['version']}' と一致しません"
         )
 
-    # SKILL.md の発見（2形式に対応）
-    # - skills: "./" → プラグインルート直下の SKILL.md
-    # - それ以外 → skills/*/SKILL.md
-    skills_field = manifest.get("skills")
-    if skills_field == "./":
-        skill_files = [source_dir / "SKILL.md"]
-        if not skill_files[0].is_file():
-            error(f"{name}: skills が './' ですがルートに SKILL.md がありません")
-            return
-    else:
-        skill_files = sorted((source_dir / "skills").glob("*/SKILL.md"))
-        if not skill_files:
-            error(f"{name}: SKILL.md が1件も見つかりません")
-            return
+    # Codex manifest は SKILL.md の有無に関わらず検証する（エラー全件収集のため）
+    check_codex_manifest(entry, source_dir, manifest)
+
+    # SKILL.md の発見（Claude / Codex 共通の skills/<name>/SKILL.md 形式）
+    skill_files = sorted((source_dir / "skills").glob("*/SKILL.md"))
+    if not skill_files:
+        error(f"{name}: SKILL.md が1件も見つかりません")
+        return
 
     for skill_file in skill_files:
         check_frontmatter(skill_file)
+
+
+def check_codex_manifest(entry: dict, source_dir: Path, claude_manifest: dict) -> None:
+    """Codex 用 manifest（.codex-plugin/plugin.json）を検証する。"""
+    name = entry.get("name", "(name 未設定)")
+    manifest_path = source_dir / ".codex-plugin" / "plugin.json"
+    if not manifest_path.is_file():
+        error(f"{name}: .codex-plugin/plugin.json がありません")
+        return
+
+    manifest = load_json(manifest_path)
+    if manifest is None:
+        return
+    rel = manifest_path.relative_to(ROOT)
+
+    for key in ("name", "description", "version"):
+        if not manifest.get(key):
+            error(f"{rel}: {key} は必須です")
+
+    for key in ("name", "version", "description"):
+        if (
+            manifest.get(key)
+            and claude_manifest.get(key)
+            and manifest[key] != claude_manifest[key]
+        ):
+            error(
+                f"{rel}: {key} '{manifest[key]}' が .claude-plugin/plugin.json の "
+                f"'{claude_manifest[key]}' と一致しません"
+            )
+
+
+def check_codex_marketplace(claude_marketplace: dict) -> None:
+    """Codex marketplace（.agents/plugins/marketplace.json）を検証する。"""
+    path = ROOT / ".agents" / "plugins" / "marketplace.json"
+    if not path.is_file():
+        error(".agents/plugins/marketplace.json がありません")
+        return
+
+    marketplace = load_json(path)
+    if marketplace is None:
+        return
+    rel = path.relative_to(ROOT)
+
+    if not marketplace.get("name"):
+        error(f"{rel}: name は必須です")
+    if not (marketplace.get("interface") or {}).get("displayName"):
+        error(f"{rel}: interface.displayName は必須です")
+
+    # policy / category は公式ドキュメント上は必須だが、enum 値が実機未確認のため
+    # ここでは検証しない。Codex 実機で確認でき次第チェックを追加する。
+
+    codex_entries = {
+        e.get("name"): e for e in marketplace.get("plugins") or [] if e.get("name")
+    }
+    claude_entries = {
+        e.get("name"): e
+        for e in claude_marketplace.get("plugins") or []
+        if e.get("name")
+    }
+
+    for name in sorted(set(claude_entries) - set(codex_entries)):
+        error(f"{rel}: Claude marketplace のプラグイン '{name}' がありません")
+    for name in sorted(set(codex_entries) - set(claude_entries)):
+        error(f"{rel}: '{name}' は Claude marketplace に存在しません")
+
+    for name in sorted(set(codex_entries) & set(claude_entries)):
+        codex_entry = codex_entries[name]
+        source = codex_entry.get("source") or {}
+        if source.get("source") != "local" or not source.get("path"):
+            error(f"{rel}: {name}: source は local + path 形式で指定してください")
+        elif source["path"] != claude_entries[name].get("source"):
+            error(
+                f"{rel}: {name}: source.path '{source['path']}' が Claude marketplace の "
+                f"'{claude_entries[name].get('source')}' と一致しません"
+            )
+
+
+def check_agents_skills_link() -> None:
+    """.agents/skills が .claude/skills を参照していることを検証する。"""
+    link = ROOT / ".agents" / "skills"
+    target = ROOT / ".claude" / "skills"
+    if not link.exists():
+        error(".agents/skills がありません（.claude/skills への symlink が必要です）")
+        return
+    if link.resolve() != target.resolve():
+        error(f".agents/skills が .claude/skills を参照していません: {link.resolve()}")
 
 
 def main() -> int:
@@ -132,6 +215,9 @@ def main() -> int:
                 error(f"marketplace.json: {key} は必須です")
         for entry in marketplace.get("plugins") or []:
             check_plugin(entry)
+        check_codex_marketplace(marketplace)
+
+    check_agents_skills_link()
 
     if errors:
         for msg in errors:

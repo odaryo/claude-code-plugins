@@ -1,27 +1,41 @@
-# claude-code-plugins
+# my-ai-plugins
 
-Claude Code プラグインのマーケットプレイスリポジトリ。
+Claude Code / Codex 両対応のプラグインマーケットプレイスリポジトリ。
 
 ## インストール
 
-Claude Code の `/install-plugin` で以下のソースを指定:
+### Claude Code
+
+`/plugin` の marketplace 追加で以下のソースを指定:
 
 ```
-git@github.com:odaryo/claude-code-plugins.git
+git@github.com:odaryo/my-ai-plugins.git
 ```
 
 または:
 
 ```
-odaryo/claude-code-plugins
+odaryo/my-ai-plugins
 ```
+
+### Codex
+
+marketplace を追加してから `/plugins` でインストール:
+
+```
+codex plugin marketplace add odaryo/my-ai-plugins
+```
+
+- プラグイン本体の manifest: 各プラグインの `.codex-plugin/plugin.json`
+- marketplace 定義: `.agents/plugins/marketplace.json`
+- リポジトリローカルの補助スキルは `.agents/skills`（`.claude/skills` への symlink）から読み込まれる
 
 ## プラグイン一覧
 
 | プラグイン | バージョン | 説明 |
 |-----------|-----------|------|
-| [consulting-codex](./consulting-codex) | 1.0.0 | Codex CLIを使った設計レビュー・技術相談・セカンドオピニオン取得 |
-| [best-practices](./best-practices) | 1.0.0 | Claude Code ベストプラクティスの調査・監査・適用ワークフロー |
+| [consulting-codex](./consulting-codex) | 1.0.1 | Codex CLIを使った設計レビュー・技術相談・セカンドオピニオン取得 |
+| [best-practices](./best-practices) | 1.0.1 | Claude Code ベストプラクティスの調査・監査・適用ワークフロー |
 
 ## consulting-codex
 
