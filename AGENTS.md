@@ -90,4 +90,5 @@ Codex 向けには以下を確認する。
   - `gitleaks`: シークレット検出。
   - `actionlint`: `.github/workflows/` 変更時のみ実行（required ではない）。
 - マージ方式は squash のみ。マージ後のブランチは自動削除される。
-- CI 通過後に自動マージしたい場合は、PR 作成後に `gh pr merge --auto --squash <PR番号>` で auto-merge を有効化する。
+- 開発フロー: ブランチ作成 → commit → PR 作成 → CI 通過を確認 → PR の diff をレビュー → 手動で squash マージ（`gh pr merge --squash <PR番号>` または GitHub UI）。
+- auto-merge はリポジトリ設定で無効化している。CI 通過後も自動ではマージせず、必ずレビューを挟む。
