@@ -7,7 +7,7 @@ Claude Code でこのリポジトリを扱う場合も、共通の作業指示�
 - Claude Code 向けのローカル設定と補助スキルは `.claude/` 配下を正とする。
 - 新しい Claude Code 補助スキルを追加する場合は `.claude/skills/<skill-name>/SKILL.md` に配置する。
 - `.codex/skills` は `.claude/skills` を参照する構成にするため、共通利用したい補助スキルは `.claude/skills` 側に追加する。
-- プラグイン本体を変更した後は、必要に応じて `/validate` で構造を確認する。
+- プラグイン本体を変更した後は、必要に応じて `/validate` で構造を確認する。CI（GitHub Actions）でも `scripts/validate_plugins.py` による同等の構造検証が PR ごとに実行される。
 - セキュリティに関わる変更やリリース前の確認では、必要に応じて `/security-review` を使う。
 
 ## Claude Plugin 構成

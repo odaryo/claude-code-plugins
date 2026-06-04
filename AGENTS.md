@@ -80,3 +80,14 @@ Codex 向けには以下を確認する。
 - Markdown frontmatter を変更した場合は、`name` と `description` の有無を確認する。
 - Claude plugin manifest を変更した場合は `.claude-plugin/plugin.json` と marketplace の整合性を確認する。
 - Codex plugin manifest を変更した場合は `.codex-plugin/plugin.json` の必須フィールドと関連ファイルの存在を確認する。
+- 上記の構造検証は `python3 scripts/validate_plugins.py` でまとめて実行できる（PyYAML が必要）。CI でも同じスクリプトが実行される。
+
+## PR とマージのフロー
+
+- `main` への変更は PR 経由で行う。`main` には branch protection が設定されており、CI（`validate` / `gitleaks`）の通過が必須。
+- CI の内容:
+  - `validate`: `scripts/validate_plugins.py` による構造検証（JSON 構文、marketplace と plugin.json の整合性、SKILL.md frontmatter）。
+  - `gitleaks`: シークレット検出。
+  - `actionlint`: `.github/workflows/` 変更時のみ実行（required ではない）。
+- マージ方式は squash のみ。マージ後のブランチは自動削除される。
+- CI 通過後に自動マージしたい場合は、PR 作成後に `gh pr merge --auto --squash <PR番号>` で auto-merge を有効化する。
