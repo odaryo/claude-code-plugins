@@ -1,58 +1,18 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Claude Code でこのリポジトリを扱う場合も、共通の作業指示は [AGENTS.md](./AGENTS.md) を正とします。
 
-## Project Overview
+## Claude Code 固有の補足
 
-Claude Code プラグインを開発・管理するリポジトリ。プラグインはスキル、フック、エージェント、コマンド、MCP サーバー統合を含む。
+- Claude Code 向けのローカル設定と補助スキルは `.claude/` 配下を正とする。
+- 新しい Claude Code 補助スキルを追加する場合は `.claude/skills/<skill-name>/SKILL.md` に配置する。
+- `.codex/skills` は `.claude/skills` を参照する構成にするため、共通利用したい補助スキルは `.claude/skills` 側に追加する。
+- プラグイン本体を変更した後は、必要に応じて `/validate` で構造を確認する。
+- セキュリティに関わる変更やリリース前の確認では、必要に応じて `/security-review` を使う。
 
-## Plugin Structure
+## Claude Plugin 構成
 
-各プラグインは以下の構造に従う:
-- `plugin.json` — マニフェスト（name, description, components の定義）
-- `skills/` — SKILL.md ファイル（YAML frontmatter + 指示文）
-- `hooks/` — フック定義（シェルスクリプト）
-- `agents/` — エージェント定義（AGENT.md）
-- `commands/` — スラッシュコマンド定義
-
-## Security Rules (CRITICAL)
-
-### 機密情報の保護
-- API キー、トークン、パスワード、シークレットをコードやスキル定義にハードコードしない
-- `.env` ファイル、`credentials.json`、秘密鍵ファイルはコミットしない
-- 環境変数参照 (`$ENV_VAR`) を使い、値を直接埋め込まない
-- テスト用のダミーデータには明示的にフェイクとわかる値を使う（例: `sk-test-fake-key-12345`）
-
-### プロンプトインジェクション対策
-- スキルやフックの入力値（`$ARGUMENTS` 等）を信頼しない — シェルコマンドに渡す前に必ずクォートまたはサニタイズする
-- ユーザー入力をそのまま `eval` や `bash -c` に渡さない
-- スキルの指示文に外部 URL からのコンテンツ取得を含めない
-- `disable-model-invocation: true` を副作用のあるスキルに設定し、ユーザーの明示的な呼び出しのみ許可する
-
-### 危険なコマンド実行の防止
-- `rm -rf`、`git push --force`、`git reset --hard` などの破壊的コマンドをフックに含めない
-- フックのコマンドは最小権限で実行する
-- ネットワークアクセスを伴うフックは、送信先を明示的にホワイトリストで制限する
-
-## Development Guidelines
-
-- **正確性を最優先する** — 時間短縮のために検討を途中で打ち切らない。懸念点が解消されるまで検証を続けること
-- プラグインのスキル説明文 (`description`) は、Claude がいつそのスキルを使うべきか判断できるよう具体的に書く
-- フックは高速で冪等であること（毎回の編集で実行されるため）
-- 新しいプラグインコンポーネントを追加したら `/validate` で構造を検証する
-- セキュリティに関わる変更は `/security-review` でレビューする
-
-## セカンドオピニオン（Codex 連携）
-
-`/consulting-codex` スキルが利用可能な場合、設計書や検討事項のレビューに積極的に活用する。
-
-### いつ使うか
-- 設計書・改善計画を作成したとき
-- アーキテクチャや実装方針に複数の選択肢があるとき
-- セキュリティに関わる判断を行うとき
-
-### 改善ループ
-1. 設計書や検討事項を `/consulting-codex` でレビュー依頼する
-2. 指摘された懸念点を設計に反映する
-3. 懸念点が解消されるまで 1-2 を繰り返す（回数制限なし — 何度でも改善ループを回してよい）
-4. 全懸念点が解消されたら実装に進む
+- Claude Code plugin manifest は各プラグインの `.claude-plugin/plugin.json` に置く。
+- marketplace 定義はルートの `.claude-plugin/marketplace.json` を更新する。
+- Claude Code 向けのスキル説明文 `description` は、自動選択しやすいよう具体的に書く。
+- 副作用のある Claude Code スキルには `disable-model-invocation: true` を設定する。
