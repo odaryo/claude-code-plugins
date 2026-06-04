@@ -34,7 +34,7 @@ codex plugin marketplace add odaryo/my-ai-plugins
 
 | プラグイン | バージョン | 説明 |
 |-----------|-----------|------|
-| [consulting-codex](./consulting-codex) | 1.1.0 | Codex CLIを使った設計レビュー・技術相談・セカンドオピニオン取得 |
+| [consulting-codex](./consulting-codex) | 1.0.2 | Codex CLIを使った設計レビュー・技術相談・セカンドオピニオン取得 |
 | [best-practices](./best-practices) | 1.0.1 | Claude Code ベストプラクティスの調査・監査・適用ワークフロー |
 
 ## consulting-codex
