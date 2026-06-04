@@ -1,6 +1,6 @@
 {
   "name": "my-ai-plugins",
-  "description": "Claude Code プラグインコレクション",
+  "description": "Claude Code / Codex 両対応のプラグインコレクション",
   "owner": {
     "name": "odaryo"
   },
@@ -9,13 +9,13 @@
       "name": "consulting-codex",
       "source": "./consulting-codex",
       "description": "Codex CLIを使った設計レビュー・技術相談・セカンドオピニオン取得",
-      "version": "1.0.0"
+      "version": "1.0.1"
     },
     {
       "name": "best-practices",
       "source": "./best-practices",
       "description": "Claude Code ベストプラクティスの調査・監査・適用ワークフロー",
-      "version": "1.0.0"
+      "version": "1.0.1"
     }
   ]
 }

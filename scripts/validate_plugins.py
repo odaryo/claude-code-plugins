@@ -103,6 +103,9 @@ def check_plugin(entry: dict) -> None:
             f"'{entry['version']}' と一致しません"
         )
 
+    # Codex manifest は SKILL.md の有無に関わらず検証する（エラー全件収集のため）
+    check_codex_manifest(entry, source_dir, manifest)
+
     # SKILL.md の発見（Claude / Codex 共通の skills/<name>/SKILL.md 形式）
     skill_files = sorted((source_dir / "skills").glob("*/SKILL.md"))
     if not skill_files:
@@ -111,8 +114,6 @@ def check_plugin(entry: dict) -> None:
 
     for skill_file in skill_files:
         check_frontmatter(skill_file)
-
-    check_codex_manifest(entry, source_dir, manifest)
 
 
 def check_codex_manifest(entry: dict, source_dir: Path, claude_manifest: dict) -> None:
@@ -160,6 +161,9 @@ def check_codex_marketplace(claude_marketplace: dict) -> None:
         error(f"{rel}: name は必須です")
     if not (marketplace.get("interface") or {}).get("displayName"):
         error(f"{rel}: interface.displayName は必須です")
+
+    # policy / category は公式ドキュメント上は必須だが、enum 値が実機未確認のため
+    # ここでは検証しない。Codex 実機で確認でき次第チェックを追加する。
 
     codex_entries = {
         e.get("name"): e for e in marketplace.get("plugins") or [] if e.get("name")

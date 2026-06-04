@@ -49,6 +49,16 @@ Codex 向けには以下を確認する。
 - Codex 用 marketplace は `.agents/plugins/marketplace.json` を正とし、`.claude-plugin/marketplace.json` とプラグイン一覧・source を同期する。
 - Codex 固有の作業ルールは `AGENTS.md` に追記し、Claude 側にも必要な内容は `CLAUDE.md` に同期する。
 
+## プラグインのバージョン管理
+
+- 公開済みプラグインの内容（スキル、manifest、同梱ファイル）を変更した場合は、`plugin.json` の `version` を semver で上げる（例: `"version": "1.0.0"` → `"1.0.1"`）。
+- 目安: ドキュメント修正やバグ修正は patch、スキル追加や機能追加は minor、互換性が壊れる変更は major。
+- `version` は次の3箇所を必ず同時に更新する（`scripts/validate_plugins.py` が一致を検証する）:
+  - `<plugin>/.claude-plugin/plugin.json`
+  - `<plugin>/.codex-plugin/plugin.json`
+  - `.claude-plugin/marketplace.json` の該当エントリ
+- README.md のプラグイン一覧にバージョンを記載している場合は、そちらも合わせて更新する。
+
 ## 現在の構成上の注意
 
 - `consulting-codex/` と `best-practices/` は `.claude-plugin/plugin.json`（Claude Code 用）と `.codex-plugin/plugin.json`（Codex 用）の両方を持つ。
