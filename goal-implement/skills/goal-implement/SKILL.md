@@ -78,7 +78,7 @@ run 開始時に `STATE.md` を読み、run ディレクトリ・state.json・�
 | P7 | CI 対応 | CI 失敗を分類（変更起因/flaky/外部障害）し、変更起因のみ Sonnet が修正 | `PHASES.md` `ERRORS.md` |
 | P8 | 完了処理 | SHA 整合検証 → goal にマージ指定があればマージ → 完了報告 | `PHASES.md` |
 
-reference は `${CLAUDE_PLUGIN_ROOT}/skills/goal-implement/` 配下にある。
+reference は `${CLAUDE_PLUGIN_ROOT}/skills/goal-implement/` 配下にある。プラグインとしてではなくリポジトリローカルのスキルとして実行されている場合（`CLAUDE_PLUGIN_ROOT` 未設定）は、**この SKILL.md と同じディレクトリ**から Read する。
 
 ## 終了状態
 
