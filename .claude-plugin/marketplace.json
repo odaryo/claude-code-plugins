@@ -9,13 +9,13 @@
       "name": "consulting-codex",
       "source": "./consulting-codex",
       "description": "Codex CLIを使った設計レビュー・技術相談・セカンドオピニオン取得",
-      "version": "1.0.2"
+      "version": "1.0.3"
     },
     {
       "name": "best-practices",
       "source": "./best-practices",
       "description": "Claude Code ベストプラクティスの調査・監査・適用ワークフロー",
-      "version": "1.0.1"
+      "version": "1.1.0"
     },
     {
       "name": "goal-implement",

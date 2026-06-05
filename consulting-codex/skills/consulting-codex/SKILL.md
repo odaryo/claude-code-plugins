@@ -68,7 +68,7 @@ review / discuss / opinion の各モードでは、以下の観点を必ずレ�
 
 **引数なし**: 会話コンテキストから質問とモードを推定し即実行。推定した質問を出力ヘッダーに表示する。コンテキストが全くない場合のみユーザーに確認する。
 
-### Step 2: プロンプト構築・実行（最大1 Bash呼び出し）
+### Step 2: プロンプト構築・実行（通常1 Bash呼び出し、失敗時の再試行を含め最大2回）
 
 #### 2a. プロンプト組み立て
 
@@ -185,22 +185,32 @@ review / discuss / opinion の各モードでは、以下の観点を必ずレ�
 
 #### 2b. モデル判定と実行（1 Bash呼び出しで完結）
 
-プロンプト内の特殊文字（`"`, `$`, `` ` ``, `\`）は適切にエスケープする。
+プロンプトは quoted heredoc（`<<'CODEX_PROMPT_EOF'`）で変数に格納してから渡す。クォートされた heredoc は `$`・バッククォート・`"`・`\` を一切展開しないため、diff やコードを含むプロンプトでも手動エスケープが不要で壊れない。唯一の注意点は、プロンプト本文の行頭に区切り文字 `CODEX_PROMPT_EOF` と同一の行が現れないこと（万一含まれる場合は `CODEX_PROMPT_EOF_2` 等の別名に変える）。
+
+Bash 呼び出しには **timeout を 600000ms（10分）** に設定する（codex の推論は数分かかることがあり、デフォルトの2分では切れる）。失敗時の再試行は**1回まで**。再試行も失敗したらエラーハンドリング表に従って中断・報告する。
 
 **code モード（通常）:** `-m` 省略でCLIデフォルトを使用。`{model}` = `default`
 ```bash
-printf '%s' "<プロンプト>" | codex exec -s read-only
+PROMPT=$(cat <<'CODEX_PROMPT_EOF'
+<プロンプト>
+CODEX_PROMPT_EOF
+)
+printf '%s' "$PROMPT" | codex exec -s read-only
 ```
 
 **review/arch/opinion モード（通常）:** モデル判定と実行を1コマンドで:
 ```bash
+PROMPT=$(cat <<'CODEX_PROMPT_EOF'
+<プロンプト>
+CODEX_PROMPT_EOF
+)
 MODEL=$(grep '^model[[:space:]]*=' ~/.codex/config.toml 2>/dev/null \
   | sed -nE 's/model[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' | head -1 || true) \
   && MODEL=${MODEL%-codex} \
   && if [ -n "$MODEL" ]; then
-       printf '%s' "<プロンプト>" | codex exec -s read-only -m "$MODEL"
+       printf '%s' "$PROMPT" | codex exec -s read-only -m "$MODEL"
      else
-       printf '%s' "<プロンプト>" | codex exec -s read-only
+       printf '%s' "$PROMPT" | codex exec -s read-only
      fi
 ```
 
@@ -210,35 +220,47 @@ MODEL=$(grep '^model[[:space:]]*=' ~/.codex/config.toml 2>/dev/null \
 
 session idが判明している場合（複数行で表記、実行時は1回のBash呼び出し）:
 ```bash
+PROMPT=$(cat <<'CODEX_PROMPT_EOF'
+<プロンプト>
+CODEX_PROMPT_EOF
+)
 MODEL=$(grep '^model[[:space:]]*=' ~/.codex/config.toml 2>/dev/null \
   | sed -nE 's/model[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' | head -1 || true) \
   && MODEL=${MODEL%-codex} \
   && if [ -n "$MODEL" ]; then
-       (printf '%s' "<プロンプト>" | codex exec resume <session-id> - -m "$MODEL" 2>&1) \
-         || (echo "---FALLBACK:new---" && printf '%s' "<プロンプト>" | codex exec -s read-only -m "$MODEL" 2>&1)
+       (printf '%s' "$PROMPT" | codex exec resume <session-id> - -m "$MODEL" 2>&1) \
+         || (echo "---FALLBACK:new---" && printf '%s' "$PROMPT" | codex exec -s read-only -m "$MODEL" 2>&1)
      else
-       (printf '%s' "<プロンプト>" | codex exec resume <session-id> - 2>&1) \
-         || (echo "---FALLBACK:new---" && printf '%s' "<プロンプト>" | codex exec -s read-only 2>&1)
+       (printf '%s' "$PROMPT" | codex exec resume <session-id> - 2>&1) \
+         || (echo "---FALLBACK:new---" && printf '%s' "$PROMPT" | codex exec -s read-only 2>&1)
      fi
 ```
 
 session idが不明な場合:
 ```bash
+PROMPT=$(cat <<'CODEX_PROMPT_EOF'
+<プロンプト>
+CODEX_PROMPT_EOF
+)
 MODEL=$(grep '^model[[:space:]]*=' ~/.codex/config.toml 2>/dev/null \
   | sed -nE 's/model[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' | head -1 || true) \
   && MODEL=${MODEL%-codex} \
   && if [ -n "$MODEL" ]; then
-       (printf '%s' "<プロンプト>" | codex exec resume --last - -m "$MODEL" 2>&1) \
-         || (echo "---FALLBACK:new---" && printf '%s' "<プロンプト>" | codex exec -s read-only -m "$MODEL" 2>&1)
+       (printf '%s' "$PROMPT" | codex exec resume --last - -m "$MODEL" 2>&1) \
+         || (echo "---FALLBACK:new---" && printf '%s' "$PROMPT" | codex exec -s read-only -m "$MODEL" 2>&1)
      else
-       (printf '%s' "<プロンプト>" | codex exec resume --last - 2>&1) \
-         || (echo "---FALLBACK:new---" && printf '%s' "<プロンプト>" | codex exec -s read-only 2>&1)
+       (printf '%s' "$PROMPT" | codex exec resume --last - 2>&1) \
+         || (echo "---FALLBACK:new---" && printf '%s' "$PROMPT" | codex exec -s read-only 2>&1)
      fi
 ```
 
 code モードのresumeは `-m` 部分を省略:
 ```bash
-(printf '%s' "<プロンプト>" | codex exec resume <session-id> - 2>&1) || (echo "---FALLBACK:new---" && printf '%s' "<プロンプト>" | codex exec -s read-only 2>&1)
+PROMPT=$(cat <<'CODEX_PROMPT_EOF'
+<プロンプト>
+CODEX_PROMPT_EOF
+)
+(printf '%s' "$PROMPT" | codex exec resume <session-id> - 2>&1) || (echo "---FALLBACK:new---" && printf '%s' "$PROMPT" | codex exec -s read-only 2>&1)
 ```
 
 出力に `---FALLBACK:new---` が含まれる場合、「セッションが見つからないため新規セッションで実行しました」とユーザーに通知する。session id不明で `--last` を使う場合も「session idが見つからないため直近のセッションを使用します」と通知する。
@@ -276,8 +298,10 @@ Claude と Codex が互いの回答をレビューし合い、懸念がなくな
 | 条件 | 動作 |
 |------|------|
 | Codex が【懸念なし】を宣言 | 合意成立として終了 |
+| 妥協フェーズ（4往復目以降）で Codex の指摘に Critical/High が 0 | 合意成立として終了（Medium/Low は残懸念として記録） |
 | ユーザー指定回数 `discuss(N):` に到達 | 残懸念をリストして終了 |
 | 10往復に到達（ハード上限） | 必ず打ち切り、残懸念をリストして終了 |
+| Codex 呼び出しが2回連続で失敗（再試行込み） | 議論を打ち切り、それまでの案と残懸念を報告して終了 |
 
 回数指定がない場合は上限10往復まで続ける。回数指定の有無にかかわらず、**3往復を超えたら妥協フェーズに移行**する: 4往復目の継続レビュー依頼から、Critical/High の懸念のみ対応を続け、Medium/Low は対応せず「残懸念」として記録する（些細な指摘での無限ループを防ぐため。`discuss(N)` で N≦3 の場合は妥協フェーズに入らず指定回数で終了）。
 
@@ -323,7 +347,7 @@ Claude と Codex が互いの回答をレビューし合い、懸念がなくな
    ```
 
    妥協フェーズ（4往復目以降）では「Critical/High の懸念のみ指摘してください。Medium/Low は残懸念として記録するため列挙のみで構いません」を追加する。
-5. **収束判定** — Codex 出力の冒頭が【懸念なし】なら終了。そうでなければ往復数・終了条件を確認して 3 に戻る。
+5. **収束判定** — Codex 出力の冒頭が【懸念なし】なら終了。妥協フェーズ中は、指摘に Critical/High が含まれなければ【懸念あり】でも合意として終了する（Medium/Low は残懸念に記録。これがないと些細な指摘だけで上限まで往復し続けてしまう）。いずれでもなければ往復数・終了条件を確認して 3 に戻る。
 6. **進捗表示** — 各往復後に1行サマリを表示する（例: `往復 2/N: Critical 0 / High 1 / Medium 2 — 継続`。N は終了上限で、`discuss(N)` 指定値、なければ 10）。透明性を保ち、ユーザーがいつでも中断判断できるようにする。
 
 ### 最終出力
@@ -354,11 +378,14 @@ Claude と Codex が互いの回答をレビューし合い、懸念がなくな
 | `command not found: codex` | インストール手順を案内 |
 | 認証エラー | `codex login` を案内 |
 | ファイル不存在 | 「ファイルが見つかりません: [パス]」 |
-| タイムアウト | 質問短縮または再試行を提案 |
+| タイムアウト（10分超過） | 再試行は1回まで。再失敗時は質問短縮またはファイル分割を提案して中断 |
 | トークン超過 | ファイル分割または要約を提案 |
+| 非ゼロ終了コード | stderr を確認して上記いずれかに分類。分類できなければ出力を添えてユーザーに報告（無限再試行しない） |
 
 ## パフォーマンス
 
-discuss 以外のモードは **最大1 Bash呼び出し** で完結する（reviewモードのファイル/diff 読み込みは別途 Read または git diff 1回）。モデル判定・実行・フォールバックはすべて1つのBashコマンドに統合されている。
+discuss 以外のモードは **通常1 Bash呼び出し** で完結する（reviewモードのファイル/diff 読み込みは別途 Read または git diff 1回）。モデル判定・実行・フォールバックはすべて1つのBashコマンドに統合されている。失敗時のみ再試行1回を追加してよい（最大2回。それ以上は再試行せずエラーハンドリング表に従う）。
 
-discuss モードは1往復につき1 Bash呼び出し（初回は新規 exec、以降は resume）。往復間の検討・改訂は Claude 側で行い、Codex 呼び出しを増やさない。
+discuss モードは1往復につき通常1 Bash呼び出し（初回は新規 exec、以降は resume。失敗時のみ最大2回）。往復間の検討・改訂は Claude 側で行い、Codex 呼び出しを増やさない。
+
+すべての codex 呼び出しで Bash の timeout は 600000ms（10分）を指定する。
