@@ -16,6 +16,12 @@
       "source": "./best-practices",
       "description": "Claude Code ベストプラクティスの調査・監査・適用ワークフロー",
       "version": "1.0.1"
+    },
+    {
+      "name": "goal-implement",
+      "source": "./goal-implement",
+      "description": "指定した goal・要件の実装を、TDD実装・Codexレビュー・PR作成・相互レビュー・CI対応まで再開可能に完遂するオーケストレーション",
+      "version": "1.0.0"
     }
   ]
 }
